@@ -390,7 +390,7 @@
                 waCtaLink: document.getElementById('dynamic-wa-cta'),
                 chartCanvas: document.getElementById('cashflowChart'),
                 inputPanel: document.getElementById('parameter-card'),
-                inputControlsStack: document.getElementById('parameter-stack'),
+                inputControlsStack: document.getElementById('parameter-stack') || document.getElementById('parameter-card')?.querySelector('[id="parameter-stack"]') || document.getElementById('parameter-card')?.querySelector('div.space-y-6, div.space-y-8') || null,
                 kpiPanel: document.getElementById('kpi-card'),
                 kpiContent: document.getElementById('kpi-content'),
                 kpiTitle: document.getElementById('kpi-title'),
@@ -407,7 +407,7 @@
                 'volSlider', 'costSlider', 'volDisplay', 'costDisplay',
                 'invilaRateInput', 'invilaRateSlider', 'invilaRateInlineDisplay',
                 'monthlySaving', 'yearlySaving', 'waCtaLink', 'chartCanvas',
-                'inputControlsStack', 'kpiContent', 'kpiTitle',
+                'kpiContent', 'kpiTitle',
                 'monthlyLabel', 'yearlyLabel', 'chartFootnote', 'chartHeaderRateDisplay'
             ];
 
@@ -425,7 +425,10 @@
         }
 
         injectModeSwitcher() {
-            if (!this.dom.inputControlsStack || this.dom.modeSwitcher) return;
+            if (this.dom.modeSwitcher) return;
+
+            const anchor = this.dom.inputControlsStack || this.dom.inputPanel;
+            if (!anchor || !anchor.parentNode) return;
 
             const wrapper = document.createElement('div');
             wrapper.className = 'mb-8 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm';
@@ -441,7 +444,7 @@
                     </div>
                 </div>`;
 
-            this.dom.inputControlsStack.before(wrapper);
+            anchor.before(wrapper);
             this.dom.modeSwitcher = wrapper;
             this.dom.modeButtons = {
                 persuasive: wrapper.querySelector('[data-mode="persuasive"]'),
@@ -450,7 +453,10 @@
         }
 
         injectInvilaRateCard() {
-            if (!this.dom.inputControlsStack || this.dom.invilaRateCard) return;
+            if (this.dom.invilaRateCard) return;
+
+            const anchor = this.dom.inputControlsStack || this.dom.inputPanel;
+            if (!anchor || !anchor.parentNode) return;
 
             const rateCard = document.createElement('div');
             rateCard.className = 'mb-4 rounded-2xl border border-teal-200 bg-teal-50 p-4 shadow-sm';
@@ -459,7 +465,7 @@
                 <div data-role="invila-rate-display" class="text-2xl font-black tracking-tight text-teal-800">Rp 0 <span class="text-sm font-bold">/m³</span></div>
                 <p class="mt-2 text-xs leading-relaxed text-slate-600">Tarif simulasi dasar yang dipakai untuk membandingkan model tradisional vs skema WaaS INVILA.</p>`;
 
-            this.dom.inputControlsStack.before(rateCard);
+            anchor.before(rateCard);
             this.dom.invilaRateCard = rateCard;
             this.dom.invilaRateDisplay = rateCard.querySelector('[data-role="invila-rate-display"]');
         }
