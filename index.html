@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#0f172a">
     <title>Interactive WaaS Analysis | INVILA GROUP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -13,25 +14,30 @@
                     colors: {
                         navy: { 800: '#1e3a5f', 900: '#0f172a' },
                         teal: { 500: '#14b8a6', 600: '#0d9488', 700: '#0f766e' },
-                        offwhite: '#f8fafc',
+                        offwhite: '#f8fafc'
                     },
                     fontFamily: {
-                        sans: ['Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+                        sans: ['Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif']
                     }
                 }
             }
-        }
+        };
     </script>
     <style>
         html {
             -webkit-text-size-adjust: 100%;
             text-size-adjust: 100%;
+            scroll-padding-top: 84px;
         }
         body {
             background-color: #f8fafc;
             color: #0f172a;
             overflow-x: hidden;
+            overscroll-behavior-x: none;
             padding-bottom: env(safe-area-inset-bottom);
+        }
+        section[id] {
+            scroll-margin-top: 84px;
         }
         .chart-container {
             position: relative;
@@ -41,6 +47,9 @@
             margin-right: auto;
             height: 280px;
             max-height: 450px;
+        }
+        @media (max-width: 420px) {
+            .chart-container { height: 240px; }
         }
         @media (min-width: 768px) {
             .chart-container { height: 420px; }
@@ -66,8 +75,28 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
             transition: transform 0.1s;
         }
-        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.1); }
+        input[type=range]::-moz-range-thumb {
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: #0d9488;
+            cursor: pointer;
+            border: 4px solid #ffffff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        @media (max-width: 640px) {
+            input[type=range]::-webkit-slider-thumb {
+                height: 28px;
+                width: 28px;
+            }
+            input[type=range]::-moz-range-thumb {
+                height: 28px;
+                width: 28px;
+            }
+        }
+        input[type=range]:active::-webkit-slider-thumb { transform: scale(1.08); }
         input[type=range].cost-slider::-webkit-slider-thumb { background: #0f172a; }
+        input[type=range].cost-slider::-moz-range-thumb { background: #0f172a; }
         button, input, select, textarea, a {
             -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
@@ -82,8 +111,8 @@
         }
     </style>
 </head>
-<body class="border-t-8 border-teal-600 antialiased selection:bg-teal-500/30 pb-[max(1rem,env(safe-area-inset-bottom))]">
-    <nav class="sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur-md shadow-sm">
+<body class="border-t-8 border-teal-600 antialiased selection:bg-teal-500/30 pb-[max(5.5rem,env(safe-area-inset-bottom))] md:pb-0">
+    <nav class="sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur-md shadow-sm pt-[env(safe-area-inset-top)]">
         <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
             <div class="flex items-center gap-3">
                 <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-navy-900 text-lg font-black text-white shadow-md">I</div>
@@ -103,7 +132,7 @@
         </div>
     </nav>
 
-    <main class="pb-24">
+    <main class="pb-28 md:pb-24">
         <section id="konteks" class="pt-14 pb-12 px-4 sm:px-6 max-w-5xl mx-auto sm:pt-20 sm:pb-16">
             <div class="bg-slate-100 border-l-4 border-navy-900 p-4 sm:p-5 rounded-r-xl mb-8 sm:mb-12 shadow-sm">
                 <p class="text-sm text-slate-700 leading-relaxed">
@@ -317,6 +346,12 @@
         <p class="text-xs font-bold uppercase tracking-[0.3em] text-slate-500">© 2026 PT INVILA TIRTA NUSANTARA | KAWASAN INDUSTRI NASIONAL</p>
     </footer>
 
+    <div class="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 p-3 backdrop-blur-md md:hidden" style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom));">
+        <a href="#" id="mobile-wa-cta" target="_blank" class="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-teal-700 px-5 py-4 text-sm font-bold uppercase tracking-[0.18em] text-white shadow-lg shadow-teal-900/15 transition-transform active:scale-[0.99]">
+            Audit Gratis via WhatsApp <span class="text-lg leading-none">&#8599;</span>
+        </a>
+    </div>
+
     <script>
 (function () {
     function onReady(fn) {
@@ -325,6 +360,10 @@
         } else {
             fn();
         }
+    }
+
+    function buildHtml(parts) {
+        return parts.join('');
     }
 
     class InvilaWaaSDashboardV21 {
@@ -374,6 +413,7 @@
             this.syncStateFromInputs();
             this.createChart();
             this.render();
+            this.runSelfChecks();
         }
 
         cacheDom() {
@@ -388,15 +428,20 @@
                 monthlySaving: document.getElementById('monthly-saving-display'),
                 yearlySaving: document.getElementById('yearly-saving-display'),
                 waCtaLink: document.getElementById('dynamic-wa-cta'),
+                mobileWaCta: document.getElementById('mobile-wa-cta'),
                 chartCanvas: document.getElementById('cashflowChart'),
                 inputPanel: document.getElementById('parameter-card'),
-                inputControlsStack: document.getElementById('parameter-stack') || document.getElementById('parameter-card')?.querySelector('[id="parameter-stack"]') || document.getElementById('parameter-card')?.querySelector('div.space-y-6, div.space-y-8') || null,
-                kpiPanel: document.getElementById('kpi-card'),
+                inputControlsStack: (function () {
+                    const panel = document.getElementById('parameter-card');
+                    return document.getElementById('parameter-stack') ||
+                        (panel ? panel.querySelector('[id="parameter-stack"]') : null) ||
+                        (panel ? panel.querySelector('div.space-y-6, div.space-y-8') : null) ||
+                        null;
+                })(),
                 kpiContent: document.getElementById('kpi-content'),
                 kpiTitle: document.getElementById('kpi-title'),
                 monthlyLabel: document.getElementById('monthly-label'),
                 yearlyLabel: document.getElementById('yearly-label'),
-                chartPanel: document.getElementById('chart-card'),
                 chartFootnote: document.getElementById('chart-footnote'),
                 chartHeaderRateDisplay: document.getElementById('chart-rate-display')
             };
@@ -406,14 +451,14 @@
             const required = [
                 'volSlider', 'costSlider', 'volDisplay', 'costDisplay',
                 'invilaRateInput', 'invilaRateSlider', 'invilaRateInlineDisplay',
-                'monthlySaving', 'yearlySaving', 'waCtaLink', 'chartCanvas',
-                'kpiContent', 'kpiTitle',
-                'monthlyLabel', 'yearlyLabel', 'chartFootnote', 'chartHeaderRateDisplay'
+                'monthlySaving', 'yearlySaving', 'waCtaLink', 'mobileWaCta', 'chartCanvas',
+                'kpiContent', 'kpiTitle', 'monthlyLabel', 'yearlyLabel',
+                'chartFootnote', 'chartHeaderRateDisplay'
             ];
 
             const missing = required.filter((key) => !this.dom[key]);
             if (missing.length > 0) {
-                throw new Error(`Elemen DOM tidak ditemukan: ${missing.join(', ')}`);
+                throw new Error('Elemen DOM tidak ditemukan: ' + missing.join(', '));
             }
         }
 
@@ -432,17 +477,18 @@
 
             const wrapper = document.createElement('div');
             wrapper.className = 'mb-8 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm';
-            wrapper.innerHTML = `
-                <div class="flex items-center justify-between gap-4 flex-wrap">
-                    <div>
-                        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Mode Analisis</p>
-                        <p class="text-xs text-slate-600 leading-relaxed">Persuasif menyamakan nilai negatif menjadi nol. Transparan menampilkan selisih biaya apa adanya.</p>
-                    </div>
-                    <div class="inline-flex rounded-xl border border-slate-200 bg-slate-50 p-1">
-                        <button type="button" data-mode="persuasive" class="mode-btn rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all">Persuasif</button>
-                        <button type="button" data-mode="transparent" class="mode-btn rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all">Transparan</button>
-                    </div>
-                </div>`;
+            wrapper.innerHTML = buildHtml([
+                '<div class="flex items-center justify-between gap-4 flex-wrap">',
+                    '<div>',
+                        '<p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Mode Analisis</p>',
+                        '<p class="text-xs text-slate-600 leading-relaxed">Persuasif menyamakan nilai negatif menjadi nol. Transparan menampilkan selisih biaya apa adanya.</p>',
+                    '</div>',
+                    '<div class="inline-flex rounded-xl border border-slate-200 bg-slate-50 p-1">',
+                        '<button type="button" data-mode="persuasive" class="mode-btn rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all">Persuasif</button>',
+                        '<button type="button" data-mode="transparent" class="mode-btn rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all">Transparan</button>',
+                    '</div>',
+                '</div>'
+            ]);
 
             anchor.before(wrapper);
             this.dom.modeSwitcher = wrapper;
@@ -460,10 +506,11 @@
 
             const rateCard = document.createElement('div');
             rateCard.className = 'mb-4 rounded-2xl border border-teal-200 bg-teal-50 p-4 shadow-sm';
-            rateCard.innerHTML = `
-                <p class="text-[10px] font-bold uppercase tracking-widest text-teal-700 mb-1">Tarif INVILA</p>
-                <div data-role="invila-rate-display" class="text-2xl font-black tracking-tight text-teal-800">Rp 0 <span class="text-sm font-bold">/m³</span></div>
-                <p class="mt-2 text-xs leading-relaxed text-slate-600">Tarif simulasi dasar yang dipakai untuk membandingkan model tradisional vs skema WaaS INVILA.</p>`;
+            rateCard.innerHTML = buildHtml([
+                '<p class="text-[10px] font-bold uppercase tracking-widest text-teal-700 mb-1">Tarif INVILA</p>',
+                '<div data-role="invila-rate-display" class="text-2xl font-black tracking-tight text-teal-800">Rp 0 <span class="text-sm font-bold">/m³</span></div>',
+                '<p class="mt-2 text-xs leading-relaxed text-slate-600">Tarif simulasi dasar yang dipakai untuk membandingkan model tradisional vs skema WaaS INVILA.</p>'
+            ]);
 
             anchor.before(rateCard);
             this.dom.invilaRateCard = rateCard;
@@ -475,9 +522,10 @@
 
             const gapCard = document.createElement('div');
             gapCard.className = 'mt-4 rounded-2xl border border-white/10 bg-white/5 p-4';
-            gapCard.innerHTML = `
-                <p data-role="gap-label" class="text-[10px] uppercase tracking-widest text-teal-300 mb-1">Gap Biaya 5 Tahun</p>
-                <div data-role="gap-display" class="text-xl font-bold text-white">Rp 0</div>`;
+            gapCard.innerHTML = buildHtml([
+                '<p data-role="gap-label" class="text-[10px] uppercase tracking-widest text-teal-300 mb-1">Gap Biaya 5 Tahun</p>',
+                '<div data-role="gap-display" class="text-xl font-bold text-white">Rp 0</div>'
+            ]);
 
             const modeNote = document.createElement('p');
             modeNote.className = 'mt-4 text-[11px] leading-relaxed text-slate-300';
@@ -495,9 +543,10 @@
 
             const box = document.createElement('div');
             box.className = 'mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4';
-            box.innerHTML = `
-                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Asumsi Simulasi 2.1</p>
-                <p data-role="assumption-summary" class="text-xs leading-relaxed text-slate-600">-</p>`;
+            box.innerHTML = buildHtml([
+                '<p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Asumsi Simulasi 2.1</p>',
+                '<p data-role="assumption-summary" class="text-xs leading-relaxed text-slate-600">-</p>'
+            ]);
 
             this.dom.chartFootnote.after(box);
             this.dom.assumptionSummary = box.querySelector('[data-role="assumption-summary"]');
@@ -537,7 +586,8 @@
             });
 
             if (this.dom.modeButtons) {
-                Object.entries(this.dom.modeButtons).forEach(([mode, button]) => {
+                Object.keys(this.dom.modeButtons).forEach((mode) => {
+                    const button = this.dom.modeButtons[mode];
                     if (!button) return;
                     button.addEventListener('click', () => this.setMode(mode));
                 });
@@ -545,7 +595,7 @@
         }
 
         setMode(mode) {
-            if (!['persuasive', 'transparent'].includes(mode)) return;
+            if (['persuasive', 'transparent'].indexOf(mode) === -1) return;
             if (this.state.mode === mode) return;
             this.state.mode = mode;
             this.scheduleRender();
@@ -616,29 +666,30 @@
             const isPersuasive = this.state.mode === 'persuasive';
 
             return {
-                labels,
-                assumedCapex,
-                yearlyVolume,
-                monthlyVolume,
-                monthlyDeltaRaw,
-                yearlyDeltaRaw,
-                fiveYearGapRaw,
+                labels: labels,
+                assumedCapex: assumedCapex,
+                yearlyVolume: yearlyVolume,
+                monthlyVolume: monthlyVolume,
+                monthlyDeltaRaw: monthlyDeltaRaw,
+                yearlyDeltaRaw: yearlyDeltaRaw,
+                fiveYearGapRaw: fiveYearGapRaw,
                 monthlyDeltaDisplay: isPersuasive ? Math.max(0, monthlyDeltaRaw) : monthlyDeltaRaw,
                 yearlyDeltaDisplay: isPersuasive ? Math.max(0, yearlyDeltaRaw) : yearlyDeltaRaw,
                 fiveYearGapDisplay: isPersuasive ? Math.max(0, fiveYearGapRaw) : fiveYearGapRaw,
-                traditionalSeries,
-                invilaSeries
+                traditionalSeries: traditionalSeries,
+                invilaSeries: invilaSeries
             };
         }
 
         buildYearLabels(years) {
-            return Array.from({ length: years + 1 }, (_, i) => `Tahun ${i}`);
+            return Array.from({ length: years + 1 }, function (_, i) { return 'Tahun ' + i; });
         }
 
         renderModeButtons() {
             if (!this.dom.modeButtons) return;
 
-            Object.entries(this.dom.modeButtons).forEach(([mode, button]) => {
+            Object.keys(this.dom.modeButtons).forEach((mode) => {
+                const button = this.dom.modeButtons[mode];
                 if (!button) return;
                 const isActive = this.state.mode === mode;
                 button.classList.remove('bg-navy-900', 'text-white', 'shadow-sm', 'text-slate-600', 'hover:text-navy-900');
@@ -659,9 +710,9 @@
         }
 
         renderInvilaRate() {
-            const rateHtml = `${this.formatCurrency(this.state.invilaRate)} <span class="text-sm font-bold">/m³</span>`;
+            const rateHtml = this.formatCurrency(this.state.invilaRate) + ' <span class="text-sm font-bold">/m³</span>';
             if (this.dom.invilaRateDisplay) this.dom.invilaRateDisplay.innerHTML = rateHtml;
-            if (this.dom.chartHeaderRateDisplay) this.dom.chartHeaderRateDisplay.textContent = `${this.formatCurrency(this.state.invilaRate)} / m³`;
+            if (this.dom.chartHeaderRateDisplay) this.dom.chartHeaderRateDisplay.textContent = this.formatCurrency(this.state.invilaRate) + ' / m³';
         }
 
         renderKpis(metrics) {
@@ -692,7 +743,7 @@
             }
         }
 
-        applyDeltaTone(element, value, prominent = false) {
+        applyDeltaTone(element, value, prominent) {
             if (!element) return;
             element.classList.remove('text-white', 'text-slate-200', 'text-teal-200', 'text-rose-300');
             if (value > 0) {
@@ -709,15 +760,14 @@
         renderAssumptionSummary(metrics) {
             if (!this.dom.assumptionSummary) return;
             const modeLabel = this.state.mode === 'persuasive' ? 'Persuasif' : 'Transparan';
-            this.dom.assumptionSummary.innerHTML = `
-                Tarif INVILA simulasi: <strong>${this.formatCurrency(this.state.invilaRate)} /m³</strong>.
-                Capex tradisional disimulasikan sebagai <strong>${this.formatCurrency(this.config.baseCapex)}</strong>
-                + <strong>${this.formatCurrency(this.config.variableCapexPerInstalledM3)}</strong> per m³ kapasitas.
-                Opex existing diasumsikan naik <strong>${this.formatPercent(this.config.traditionalEscalationRate)}</strong> per tahun,
-                sedangkan tarif INVILA naik <strong>${this.formatPercent(this.config.invilaEscalationRate)}</strong> per tahun.
-                Horizon analisis: <strong>${this.config.projectionYears} tahun</strong>.
-                Mode aktif: <strong>${modeLabel}</strong>.
-                Gap kumulatif 5 tahun saat ini: <strong>${this.formatCurrencySigned(metrics.fiveYearGapRaw)}</strong>.`;
+            this.dom.assumptionSummary.innerHTML = buildHtml([
+                'Tarif INVILA simulasi: <strong>', this.formatCurrency(this.state.invilaRate), ' /m³</strong>. ',
+                'Capex tradisional disimulasikan sebagai <strong>', this.formatCurrency(this.config.baseCapex), '</strong> + <strong>', this.formatCurrency(this.config.variableCapexPerInstalledM3), '</strong> per m³ kapasitas. ',
+                'Opex existing diasumsikan naik <strong>', this.formatPercent(this.config.traditionalEscalationRate), '</strong> per tahun, sedangkan tarif INVILA naik <strong>', this.formatPercent(this.config.invilaEscalationRate), '</strong> per tahun. ',
+                'Horizon analisis: <strong>', String(this.config.projectionYears), ' tahun</strong>. ',
+                'Mode aktif: <strong>', modeLabel, '</strong>. ',
+                'Gap kumulatif 5 tahun saat ini: <strong>', this.formatCurrencySigned(metrics.fiveYearGapRaw), '</strong>.'
+            ]);
         }
 
         renderWhatsAppCta(metrics) {
@@ -727,20 +777,22 @@
             const gapFiveYears = this.state.mode === 'persuasive' ? this.formatCurrency(metrics.fiveYearGapDisplay) : this.formatCurrencySigned(metrics.fiveYearGapDisplay);
             const messageLines = [
                 'Halo Konsultan INVILA, melalui aplikasi interaktif The Hook, pabrik saya mengindikasikan:',
-                `- Volume: ${this.formatNumber(this.state.volume)} m3/hari`,
-                `- Opex Eksisting: Rp ${this.formatNumber(this.state.currentCost)}/m3`,
-                `- Tarif INVILA Simulasi: Rp ${this.formatNumber(this.state.invilaRate)}/m3`,
-                `- Mode Analisis: ${modeLabel}`,
-                `- Asumsi Capex Tradisional: ${this.formatCurrency(metrics.assumedCapex)}`,
-                `- Eskalasi Opex Existing: ${this.formatPercent(this.config.traditionalEscalationRate)}/tahun`,
-                `- Eskalasi Tarif INVILA: ${this.formatPercent(this.config.invilaEscalationRate)}/tahun`,
-                `- Delta Bulanan Tahun 1: ${deltaMonthly}`,
-                `- Delta Tahunan Tahun 1: ${deltaYearly}`,
-                `- Gap Kumulatif 5 Tahun: ${gapFiveYears}`,
+                '- Volume: ' + this.formatNumber(this.state.volume) + ' m3/hari',
+                '- Opex Eksisting: Rp ' + this.formatNumber(this.state.currentCost) + '/m3',
+                '- Tarif INVILA Simulasi: Rp ' + this.formatNumber(this.state.invilaRate) + '/m3',
+                '- Mode Analisis: ' + modeLabel,
+                '- Asumsi Capex Tradisional: ' + this.formatCurrency(metrics.assumedCapex),
+                '- Eskalasi Opex Existing: ' + this.formatPercent(this.config.traditionalEscalationRate) + '/tahun',
+                '- Eskalasi Tarif INVILA: ' + this.formatPercent(this.config.invilaEscalationRate) + '/tahun',
+                '- Delta Bulanan Tahun 1: ' + deltaMonthly,
+                '- Delta Tahunan Tahun 1: ' + deltaYearly,
+                '- Gap Kumulatif 5 Tahun: ' + gapFiveYears,
                 '',
                 'Mohon informasi penjadwalan Audit Kelayakan untuk implementasi model WaaS.'
             ];
-            this.dom.waCtaLink.href = `https://wa.me/${this.config.targetPhone}?text=${encodeURIComponent(messageLines.join('\n'))}`;
+            const waHref = 'https://wa.me/' + this.config.targetPhone + '?text=' + encodeURIComponent(messageLines.join(String.fromCharCode(10)));
+            this.dom.waCtaLink.href = waHref;
+            if (this.dom.mobileWaCta) this.dom.mobileWaCta.href = waHref;
         }
 
         createChart() {
@@ -799,7 +851,7 @@
                                 label: (context) => {
                                     const label = context.dataset.label || '';
                                     const value = context.parsed.y ?? 0;
-                                    return `${label}: ${this.formatCompactCurrency(value)}`;
+                                    return label + ': ' + this.formatCompactCurrency(value);
                                 }
                             }
                         },
@@ -831,9 +883,9 @@
         }
 
         showChartUnavailable(message) {
-            const container = this.dom.chartCanvas?.parentElement;
+            const container = this.dom.chartCanvas && this.dom.chartCanvas.parentElement;
             if (!container) return;
-            container.innerHTML = `<div class="flex h-full min-h-[240px] items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-500">${message}</div>`;
+            container.innerHTML = '<div class="flex h-full min-h-[240px] items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-500">' + message + '</div>';
         }
 
         renderChart(metrics) {
@@ -851,20 +903,20 @@
         formatCurrencySigned(value) {
             const rounded = Math.round(value);
             const absFormatted = this.currencyFormatter.format(Math.abs(rounded));
-            if (rounded > 0) return `+${absFormatted}`;
-            if (rounded < 0) return `-${absFormatted}`;
+            if (rounded > 0) return '+' + absFormatted;
+            if (rounded < 0) return '-' + absFormatted;
             return absFormatted;
         }
 
         formatCompactCurrency(value) {
             const abs = Math.abs(value);
-            if (abs >= 1000000000) return `Rp ${(value / 1000000000).toFixed(1)} Miliar`;
-            if (abs >= 1000000) return `Rp ${(value / 1000000).toFixed(1)} Juta`;
+            if (abs >= 1000000000) return 'Rp ' + (value / 1000000000).toFixed(1) + ' Miliar';
+            if (abs >= 1000000) return 'Rp ' + (value / 1000000).toFixed(1) + ' Juta';
             return this.formatCurrency(value);
         }
 
         formatAxisBillions(value) {
-            return `${(value / 1000000000).toFixed(0)} Mlr`;
+            return (value / 1000000000).toFixed(0) + ' Mlr';
         }
 
         formatNumber(value) {
@@ -872,11 +924,19 @@
         }
 
         formatPercent(value) {
-            return `${(value * 100).toFixed(1)}%`;
+            return (value * 100).toFixed(1) + '%';
+        }
+
+        runSelfChecks() {
+            console.assert(typeof this.dom.waCtaLink.href === 'string', 'CTA link should exist');
+            console.assert(this.dom.invilaRateInput.value !== '', 'INVILA rate input should be populated');
+            console.assert(!this.dom.mobileWaCta || typeof this.dom.mobileWaCta.href === 'string', 'Mobile CTA link should exist');
+            console.assert(this.dom.waCtaLink.href.indexOf('wa.me/') !== -1, 'CTA link should point to WhatsApp');
+            console.assert(this.chart || (this.dom.chartCanvas && this.dom.chartCanvas.parentElement.textContent.length > 0), 'Chart or fallback should render');
         }
     }
 
-    onReady(() => {
+    onReady(function () {
         try {
             const dashboard = new InvilaWaaSDashboardV21();
             dashboard.init();
@@ -885,7 +945,7 @@
             console.error('Gagal menginisialisasi dashboard INVILA v2.1:', error);
             const chartContainer = document.querySelector('.chart-container');
             if (chartContainer) {
-                chartContainer.innerHTML = `<div class="flex h-full min-h-[240px] items-center justify-center rounded-2xl border border-dashed border-rose-200 bg-rose-50 p-6 text-center text-sm text-rose-700">Terjadi kendala saat memuat dashboard. Buka console browser untuk detail error.</div>`;
+                chartContainer.innerHTML = '<div class="flex h-full min-h-[240px] items-center justify-center rounded-2xl border border-dashed border-rose-200 bg-rose-50 p-6 text-center text-sm text-rose-700">Terjadi kendala saat memuat dashboard. Buka console browser untuk detail error.</div>';
             }
         }
     });
